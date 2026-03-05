@@ -5,7 +5,55 @@
 
 ## What is Tracker?
 
-Tracker is a standalone desktop application designed for law enforcement professionals to manage cases, track subjects, and visualize relationships between people, gangs, events, and locations. Built with security and offline capability in mind, all data stays local on your machine.
+Tracker is a standalone desktop application for OSINT professionals and investigators to manage cases, track subjects, and visualize relationships between people, organizations, events, and locations. Built with security and offline capability in mind, all data stays local on your machine.
+
+---
+
+## Testing Phase
+
+This repo is currently in the **testing phase**. Run directly from source — no builds or executables. This allows quick updates via `git pull` without losing your local database or media files.
+
+---
+
+## Setup & Run
+
+### 1. Clone the repo
+
+```bash
+git clone <repo-url>
+cd Tracker-Repo
+```
+
+### 2. Install dependencies
+
+**Linux (Debian/Ubuntu/Kali):**
+```bash
+sudo apt install python3-pyqt6 python3-pyqt6.qtwebengine
+pip install pyotp qrcode[pil] cryptography
+```
+
+**Windows:**
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run
+
+```bash
+python3 main.py
+```
+
+On first launch you'll be prompted to create a username and password. Your database and auth files are created locally and are excluded from the repo via `.gitignore`.
+
+---
+
+## Updating
+
+Pull the latest changes — your local data is unaffected:
+
+```bash
+git pull
+```
 
 ---
 
@@ -14,29 +62,16 @@ Tracker is a standalone desktop application designed for law enforcement profess
 | Feature | Description |
 |---------|-------------|
 | **Subject Management** | Track individuals with photos, aliases, affiliations, contact info, social media, and physical descriptions |
-| **Gang Intelligence** | Document gangs, sets, territories, and hierarchies |
+| **Organization Intelligence** | Document organizations, sets, territories, and hierarchies |
 | **Event Logging** | Record incidents with dates, locations, and involved parties with full media attachment support |
 | **Location Tracking** | Map addresses and associate them with subjects/events |
 | **Vehicle Database** | Track vehicles with plates, descriptions, and owners |
 | **Weapon Registry** | Document weapons linked to subjects or events |
-| **Charge Tracking** | Record criminal charges and case information |
+| **Charge Tracking** | Record charges and case information |
 | **Online Accounts** | Track social media accounts and posts even before linked to a subject |
 | **DNS Investigations** | Document domain lookups, WHOIS data, and hosting information |
 | **Graffiti/Intel Logs** | Store graffiti photos and intelligence notes |
 | **Relationship Graph** | Interactive visualization showing connections between all entities - click nodes to view/edit details |
-
----
-
-## How It Works
-
-1. **Authentication** - Secure login with optional two-factor authentication (2FA)
-2. **Data Entry** - Add subjects, gangs, events, locations via intuitive forms
-3. **Link Entities** - Connect subjects to gangs, events to locations, etc.
-4. **Visualize** - View the relationship graph to see connections at a glance
-5. **Investigate** - Click any node in the graph to drill into full details
-6. **Export/Backup** - Encrypted export for secure data backup and transfer
-
-All data is stored in an encrypted local SQLite database. Media files (photos, documents) are organized in the `data/media` directory structure.
 
 ---
 
@@ -121,49 +156,6 @@ All data is stored in an encrypted local SQLite database. Media files (photos, d
 
 ---
 
-### Build Scripts
-
-#### `build/linux/build.sh`
-**Purpose:** Creates standalone Linux executable using PyInstaller.
-
-**Process:**
-1. Detects Debian-based systems for apt package installation
-2. Creates isolated virtual environment to avoid system conflicts
-3. Installs PyInstaller and all Python dependencies
-4. Bundles application with all required data files
-5. Outputs single executable to `dist/Tracker`
-
-**Requirements:** Python 3.10+, pip, venv
-
----
-
-#### `build/linux/create_appimage.sh`
-**Purpose:** Packages the built executable into a portable AppImage.
-
-**Process:**
-1. Creates AppDir structure (usr/bin, usr/share, etc.)
-2. Copies executable and creates desktop entry
-3. Generates AppRun launcher script
-4. Uses appimagetool to create final .AppImage file
-
-**Requirements:** appimagetool, successful build.sh run first
-
----
-
-#### `build/windows/build.bat`
-**Purpose:** Creates standalone Windows .exe using PyInstaller.
-
-**Process:**
-1. Verifies Python installation
-2. Installs dependencies from requirements.txt
-3. Installs PyInstaller if not present
-4. Bundles application with Windows-specific paths
-5. Outputs Tracker.exe to dist folder
-
-**Requirements:** Python 3.10+, pip (included with Python on Windows)
-
----
-
 ### Data Files
 
 | File | Description |
@@ -174,101 +166,27 @@ All data is stored in an encrypted local SQLite database. Media files (photos, d
 
 ---
 
-## Security Notes
-
-### Encryption
-- Database exports use AES-256-GCM authenticated encryption
-- Key derivation uses PBKDF2 with 600,000 iterations (OWASP recommended)
-- Each encryption operation uses unique random salt and nonce
-- No hardcoded keys or secrets in source code
-
-### Authentication
-- Passwords hashed with SHA-256 + unique salt per user
-- Optional TOTP two-factor authentication
-- Session tokens for maintaining login state
-- Account lockout after failed attempts
-
-### Data Storage
-- All data stored locally in SQLite database
-- No cloud connectivity or external API calls
-- No telemetry, analytics, or data collection
-- Media files stored in local `data/media` directory
-
-### SQL Injection Prevention
-- All database queries use parameterized statements
-- No string concatenation in SQL queries
-- Input validation on all user-provided data
-
----
-
 ## System Requirements
 
 | Requirement | Specification |
 |-------------|---------------|
 | Operating System | Linux (Debian/Ubuntu/Kali) or Windows 10/11 |
-| Python | 3.10 or higher (for running from source) |
+| Python | 3.10 or higher |
 | Dependencies | PyQt6, PyQt6-WebEngine, pyotp, qrcode, cryptography |
 | Disk Space | 500MB minimum (plus space for media files) |
 | Memory | 4GB RAM recommended |
 
 ---
 
-## Installation
+## Reporting Issues
 
-### From Source (Development)
-
-1. Install Python 3.10+
-
-2. Install dependencies:
-
-   **Linux (Debian-based):**
-   ```bash
-   sudo apt install python3-pyqt6 python3-pyqt6.qtwebengine
-   pip install pyotp qrcode[pil] cryptography
-   ```
-
-   **Windows/Other:**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-3. Run:
-   ```bash
-   python main.py
-   ```
-
-### Build Executable
-
-**Linux:**
-```bash
-cd Tracker
-./build/linux/build.sh
-./build/linux/create_appimage.sh  # optional, for portable AppImage
-# Output: dist/Tracker or Tracker-x86_64.AppImage
-```
-
-**Windows:**
-```cmd
-cd Tracker
-build\windows\build.bat
-# Output: dist\Tracker.exe
-```
-
----
-
-## Intended Use
-
-Tracker is designed for authorized law enforcement personnel conducting legitimate investigations. It provides a structured way to organize case information that would otherwise be scattered across notebooks, spreadsheets, and various files. The relationship graph helps identify connections that might not be obvious when data is siloed.
-
-**Typical use cases:**
-- Gang unit investigations
-- Case file organization
-- Subject tracking and monitoring
-- Intelligence gathering and analysis
-- Multi-agency information sharing (via encrypted exports)
+If something isn't working, open an issue on the repo with:
+- What you were doing
+- What happened vs what you expected
+- Your OS and Python version
 
 ---
 
 ## License
 
-This software is provided for law enforcement and educational purposes. All usage must comply with applicable laws and department policies.
+This software is provided for OSINT research and educational purposes. All usage must comply with applicable laws and regulations.
