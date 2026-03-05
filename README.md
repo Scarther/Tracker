@@ -21,7 +21,7 @@ This repo is currently in the **testing phase**. Run directly from source — no
 
 ```bash
 git clone <repo-url>
-cd Tracker-Repo
+cd Tracker
 ```
 
 ### 2. Install dependencies
