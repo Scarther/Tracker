@@ -6198,8 +6198,7 @@ class UniversalLinkDialog(QDialog):
         self.target_type = QComboBox()
         self.target_type.addItem("-- Select Type --", None)
         for type_code, type_display in self.ENTITY_TYPES:
-            if type_code != self.source_type:  # Don't show same type for self-links (use specific dialogs)
-                self.target_type.addItem(type_display, type_code)
+            self.target_type.addItem(type_display, type_code)
         self.target_type.currentIndexChanged.connect(self.on_type_changed)
         type_layout.addRow("Entity Type:", self.target_type)
 
@@ -6292,6 +6291,8 @@ class UniversalLinkDialog(QDialog):
         # Populate based on type
         if target_type == 'subject':
             for s in self.db.get_all_subjects():
+                if target_type == self.source_type and s['id'] == self.source_id:
+                    continue  # Skip self
                 self.target_entity.addItem(f"👤 {s['first_name']} {s['last_name']}", s['id'])
         elif target_type == 'vehicle':
             for v in self.db.get_all_vehicles():
@@ -6817,7 +6818,7 @@ var n=new vis.DataSet([]),e=new vis.DataSet([]);
 var net=new vis.Network(document.getElementById('g'),{nodes:n,edges:e},{
 nodes:{shape:'ellipse',size:35,font:{color:'#e0e0e8',size:28,face:'Arial'},borderWidth:3,shadow:true,widthConstraint:{minimum:50},heightConstraint:{minimum:50}},
 edges:{width:2,color:{color:'#3a3a4a',highlight:'#c9a040'},smooth:{enabled:true,type:'dynamic',roundness:0.5}},
-physics:{barnesHut:{gravitationalConstant:-3000,centralGravity:0.5,springLength:180,springConstant:0.08,damping:0.7,avoidOverlap:0.8},solver:'barnesHut',stabilization:{iterations:500,fit:true},timestep:0.35,maxVelocity:30,minVelocity:0.75},
+physics:{barnesHut:{gravitationalConstant:-8000,centralGravity:0.3,springLength:350,springConstant:0.04,damping:0.6,avoidOverlap:1.0},solver:'barnesHut',stabilization:{iterations:800,fit:true},timestep:0.3,maxVelocity:25,minVelocity:0.5},
 interaction:{hover:true,tooltipDelay:200},
 groups:{
 subject:{color:{background:'#4a7c9b',border:'#5a8cab',highlight:{background:'#5a9cbf',border:'#7abcdf'}}},
@@ -6835,7 +6836,7 @@ post:{color:{background:'#5a8a6a',border:'#6a9a7a',highlight:{background:'#7aaa8
 }
 });
 net.on('stabilizationIterationsDone',function(){net.setOptions({physics:false});});
-net.on('dragStart',function(){net.setOptions({physics:{enabled:true,barnesHut:{gravitationalConstant:-3000,centralGravity:0.5,springLength:180,springConstant:0.08,damping:0.7,avoidOverlap:0.8},solver:'barnesHut',timestep:0.35,maxVelocity:30,minVelocity:0.75}});});
+net.on('dragStart',function(){net.setOptions({physics:{enabled:true,barnesHut:{gravitationalConstant:-8000,centralGravity:0.3,springLength:350,springConstant:0.04,damping:0.6,avoidOverlap:1.0},solver:'barnesHut',timestep:0.3,maxVelocity:25,minVelocity:0.5}});});
 net.on('dragEnd',function(){setTimeout(function(){net.setOptions({physics:false});},2000);});
 var tooltip=document.getElementById('tooltip');
 net.on('hoverNode',function(p){
@@ -7096,6 +7097,13 @@ class ProfilePanel(QWidget):
         # Refresh the current profile to show new links
         self.refresh_current()
 
+        # Refresh the graph to show new/removed edges
+        main_win = self.parent()
+        while main_win and not isinstance(main_win, MainWindow):
+            main_win = main_win.parent()
+        if main_win:
+            main_win.refresh_graph(self.current_type, self.current_id)
+
     def refresh_current(self):
         """Refresh the current entity display"""
         if not self.current_type or not self.current_id:
@@ -7125,6 +7133,16 @@ class ProfilePanel(QWidget):
             self.show_tracked_phone(self.current_id)
         elif self.current_type == 'post':
             self.show_post(self.current_id)
+
+    def _edit_gang_role(self, subject_id, gang_id, current_role):
+        """Edit a member's role in a gang/organization"""
+        roles = ["Leader", "Co-Leader", "Lieutenant", "Enforcer", "Member",
+                 "Associate", "Recruit", "Informant", "Former Member", "Prospect"]
+        role, ok = QInputDialog.getItem(self, "Edit Role", "Select role:",
+                                         roles, roles.index(current_role) if current_role in roles else 4, True)
+        if ok and role:
+            self.db.update_subject_gang_role(subject_id, gang_id, role)
+            self.show_gang(gang_id)  # Refresh
 
     def show_universal_links(self, entity_type: str, entity_id: str):
         """Show universal links for any entity - call this from show_* methods"""
@@ -7400,7 +7418,13 @@ class ProfilePanel(QWidget):
             members = QGroupBox(f"Members ({len(p['members'])})")
             m_l = QVBoxLayout(members)
             for m in p['members']:
-                m_l.addWidget(QLabel(f"• {m['first_name']} {m['last_name']} ({m.get('role', 'Member')})"))
+                role = m.get('role') or 'Member'
+                btn = QPushButton(f"• {m['first_name']} {m['last_name']} ({role})")
+                btn.setStyleSheet("text-align: left; background: transparent; border: none; color: #c0c0c0; padding: 2px;")
+                btn.setCursor(Qt.CursorShape.PointingHandCursor)
+                member_id = m['id']
+                btn.clicked.connect(lambda checked, sid=member_id, gid=gang_id, r=role: self._edit_gang_role(sid, gid, r))
+                m_l.addWidget(btn)
             self.content_layout.addWidget(members)
 
         if p.get('events'):
