@@ -2832,7 +2832,7 @@ class TrackerDB:
 
         # Position each component in a grid, spread apart
         node_positions = {}
-        component_spacing = 800  # Distance between component centers
+        component_spacing = 1200  # Distance between component centers
         cols = max(1, int(math.ceil(math.sqrt(len(components)))))
 
         for comp_idx, component in enumerate(components):
@@ -2875,7 +2875,7 @@ class TrackerDB:
                     by_distance[dist].append(node_id)
 
                 # Assign positions
-                radius_step = 200
+                radius_step = 350
                 for dist, node_ids_at_dist in by_distance.items():
                     if dist == 0:
                         node_positions[node_ids_at_dist[0]] = (center_x, center_y)
@@ -4903,6 +4903,13 @@ class TrackerDB:
     # =========================================================================
     # UNLINK METHODS
     # =========================================================================
+
+    def update_subject_gang_role(self, subject_id: str, gang_id: str, role: str):
+        """Update a subject's role in a gang."""
+        cursor = self.conn.cursor()
+        cursor.execute("UPDATE subject_gangs SET role = ? WHERE subject_id = ? AND gang_id = ?",
+                       (role, subject_id, gang_id))
+        self.conn.commit()
 
     def unlink_subject_from_gang(self, subject_id: str, gang_id: str):
         """Remove link between subject and gang."""
