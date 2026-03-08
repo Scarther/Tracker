@@ -1,4 +1,5 @@
 # Alpha Testing At This time
+Periodic updates to scripts. Complete Release will have AppImage and .exe files for simpler use
 
 
 # TRACKER
